@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Stefano Boselli",
+    "email": "Stefanoboselli@gmail.com",
+    "password": "Password@1!",
+    "isAdmin": false,
+    "userId": "user_1748012260211"
+  },
+  {
+    "name": "Smoothie Shack Admin",
+    "email": "Smoothieshack@gmail.com",
+    "password": "SmoothieShack!",
+    "isAdmin": true,
+    "userId": "user_1748025229211",
+    "cafeteriaId": 5
+  },
+  {
+    "name": "Cafeteria 1",
+    "email": "caf1@gmail.com",
+    "password": "Cafeteria1!",
+    "phone": "09018765532",
+    "isAdmin": true,
+    "userId": "user_1748089346647",
+    "cafeteriaId": 1
+  }
+]

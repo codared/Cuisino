@@ -1,0 +1,12 @@
+[
+  { "id": 0, "name": "Jollof Rice with Chicken" },
+  { "id": 1, "name": "Fried Rice with Plantain" },
+  { "id": 2, "name": "Yam Porridge" },
+  { "id": 3, "name": "Poundo Yam with Egusi" },
+  { "id": 4, "name": "Spaghetti with Turkey" },
+  { "id": 5, "name": "Pancakes with Syrup" },
+  { "id": 6, "name": "Smoothie - Banana" },
+  { "id": 7, "name": "Smoothie - Mango" },
+  { "id": 8, "name": "White Rice with Stew" },
+  { "id": 9, "name": "Beans and Plantain" }
+]

@@ -1,0 +1,180 @@
+[
+  {
+    "name": "Jollof Rice",
+    "price": 1900,
+    "category": "Rice Meals",
+    "cafeteria_id": 1,
+    "tags": [
+      "rice",
+      "chicken",
+      "lunch"
+    ],
+    "id": 1,
+    "image": "https://res.cloudinary.com/dan8108wf/image/upload/v1747953809/fujpuyuxodshw3juwviu.jpg",
+    "orderCount": 5,
+    "availabilityStatus": "Available"
+  },
+  {
+    "name": "Fried Rice & Plantain",
+    "price": 2200,
+    "category": "Rice Meals",
+    "cafeteria_id": 1,
+    "tags": [
+      "rice",
+      "plantain",
+      "lunch"
+    ],
+    "id": 2,
+    "image": "https://res.cloudinary.com/dan8108wf/image/upload/v1748136369/wplg8qffuxmi25on81gq.jpg",
+    "orderCount": 2,
+    "availabilityStatus": "Available"
+  },
+  {
+    "name": "Yam Porridge",
+    "price": 1200,
+    "category": "Local Meals",
+    "cafeteria_id": 2,
+    "tags": [
+      "yam",
+      "porridge"
+    ],
+    "id": 3,
+    "image": "https://res.cloudinary.com/dan8108wf/image/upload/v1747951805/op8a2rqa0uz5bcifw0uc.jpg",
+    "orderCount": 2,
+    "availabilityStatus": "Available"
+  },
+  {
+    "name": "Poundo Yam with Egusi",
+    "price": 2000,
+    "category": "Swallow",
+    "cafeteria_id": 2,
+    "tags": [
+      "swallow",
+      "egusi"
+    ],
+    "id": 4,
+    "image": "https://res.cloudinary.com/dan8108wf/image/upload/v1747951887/hibxoswstq0ukiwnjhin.jpg",
+    "orderCount": 3,
+    "availabilityStatus": "Available"
+  },
+  {
+    "name": "Spaghetti with Turkey",
+    "price": 2000,
+    "category": "Pasta",
+    "cafeteria_id": 3,
+    "tags": [
+      "spaghetti",
+      "turkey"
+    ],
+    "id": 5,
+    "orderCount": 2,
+    "availabilityStatus": "Available"
+  },
+  {
+    "name": "Pancakes with Syrup",
+    "price": 2500,
+    "category": "Breakfast",
+    "cafeteria_id": 3,
+    "tags": [
+      "pancake",
+      "sweet"
+    ],
+    "id": 6,
+    "image": "https://res.cloudinary.com/dan8108wf/image/upload/v1747738458/xxsnxywrnh7lmsbt4vu7.jpg",
+    "orderCount": 1,
+    "availabilityStatus": "Available"
+  },
+  {
+    "name": "Smoothie - Banana",
+    "price": 900,
+    "category": "Drinks",
+    "cafeteria_id": 4,
+    "tags": [
+      "smoothie",
+      "banana"
+    ],
+    "id": 7,
+    "orderCount": 1,
+    "availabilityStatus": "Available"
+  },
+  {
+    "name": "Smoothie - Mango",
+    "price": 900,
+    "category": "Drinks",
+    "cafeteria_id": 4,
+    "tags": [
+      "smoothie",
+      "mango"
+    ],
+    "id": 8,
+    "orderCount": 1,
+    "availabilityStatus": "Available"
+  },
+  {
+    "name": "White Rice with Stew",
+    "price": 1300,
+    "category": "Rice Meals",
+    "cafeteria_id": 5,
+    "tags": [
+      "rice",
+      "stew"
+    ],
+    "id": 9,
+    "orderCount": 3,
+    "availabilityStatus": "Available"
+  },
+  {
+    "name": "Beans & Plantain",
+    "price": 1100,
+    "category": "Local Meals",
+    "cafeteria_id": 5,
+    "tags": [
+      "beans",
+      "plantain"
+    ],
+    "id": 10,
+    "availabilityStatus": "Available",
+    "image": "https://res.cloudinary.com/dan8108wf/image/upload/v1748135774/hcahk2ysqvrhqioabokp.jpg"
+  },
+  {
+    "id": 11,
+    "name": "Semo",
+    "price": 2300,
+    "cafeteria_id": 1,
+    "category": "Igbo Dishes",
+    "availabilityStatus": "Available"
+  },
+  {
+    "id": 12,
+    "name": "Abacha with Ukazi",
+    "price": 1800,
+    "cafeteria_id": 1,
+    "category": "Igbo Dishes",
+    "image": "https://res.cloudinary.com/dan8108wf/image/upload/v1748134990/aquslcg7jobmhdm0jpkx.jpg",
+    "availabilityStatus": "Available"
+  },
+  {
+    "id": 13,
+    "name": "Chinese Rice",
+    "price": 3500,
+    "cafeteria_id": 1,
+    "category": "Other Dishes",
+    "availabilityStatus": "Available"
+  },
+  {
+    "id": 14,
+    "name": "Mr Pancake - Waffles",
+    "price": 600,
+    "cafeteria_id": 4,
+    "category": "Mr Pancake",
+    "availabilityStatus": "Available"
+  },
+  {
+    "id": 15,
+    "name": "Meat Pie",
+    "price": 700,
+    "cafeteria_id": 3,
+    "category": "Snacks",
+    "availabilityStatus": "Available"
+  }
+]
