@@ -149,3 +149,10 @@ def recommend(user_id: str):
     recommended_meals = [meal for meal in meals_data if meal["name"] in recommended_names]
     return {"recommended_meals": recommended_meals}
 
+import os
+
+port = int(os.getenv("PORT", 10000))
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("knn_api:app", host="0.0.0.0", port=port)
