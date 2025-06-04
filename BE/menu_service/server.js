@@ -45,7 +45,9 @@ const express = require("express");
 // const mongoose = require("mongoose");
 const cors = require("cors");
 const http = require("http");
-const fetch = require("node-fetch");
+// const fetch = require("node-fetch");
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 const socketIO = require("socket.io");
 const meals = require("./meals.json"); // local file
@@ -292,15 +294,18 @@ app.get("/verify/:reference", async (req, res) => {
       }
     );
 
+    console.log("💡 Looking for order with ID:", data.data.metadata.order_id);
+    console.log(
+      "📦 Orders available:",
+      orders.map((o) => o.id)
+    );
+
     const data = await verifyRes.json();
     if (!data.status || data.data.status !== "success") {
       return res.status(400).json({ error: "Payment verification failed" });
     }
-
     // 🔁 Find and update order
-    const order = orders.find(
-      (o) => o.id === parseInt(data.data.metadata.order_id)
-    );
+    const order = orders.find((o) => o.id == data.data.metadata.order_id);
     if (!order) return res.status(404).json({ error: "Order not found" });
 
     order.paid = true;
