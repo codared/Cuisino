@@ -294,13 +294,8 @@ app.get("/verify/:reference", async (req, res) => {
       }
     );
 
-    console.log("💡 Looking for order with ID:", data.data.metadata.order_id);
-    console.log(
-      "📦 Orders available:",
-      orders.map((o) => o.id)
-    );
-
     const data = await verifyRes.json();
+
     console.log("💡 Looking for order with ID:", data.data.metadata.order_id);
     console.log(
       "📦 Orders available:",
