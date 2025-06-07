@@ -604,7 +604,7 @@ const JWT_SECRET =
 mongoose.connect(
   process.env.MONGO_URI ||
     // "mongodb+srv://<db_username>:<db_password>@abuad.uskzl8q.mongodb.net/?retryWrites=true&w=majority&appName=abuad",
-    "mongodb+srv://ohuejames101:abuadatlas@abuad.uskzl8q.mongodb.net/abuad?retryWrites=true&w=majority&appName=abuad",
+    "mongodb+srv://cuisino:Cuisino@abuad.uskzl8q.mongodb.net/?retryWrites=true&w=majority&appName=abuad",
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
