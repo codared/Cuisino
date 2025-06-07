@@ -725,10 +725,18 @@ app.post("/meals", authenticate, isAdmin, async (req, res) => {
 // Get all meals (public)
 app.get("/meals", async (req, res) => {
   try {
-    const meals = await Meal.find({});
+    const { cafeteria_id } = req.query;
+
+    let meals;
+    if (cafeteria_id) {
+      meals = await Meal.find({ cafeteria_id: Number(cafeteria_id) });
+    } else {
+      meals = await Meal.find();
+    }
+
     res.json(meals);
   } catch (err) {
-    console.error("Error fetching meals:", error);
+    console.error("Failed to fetch meals:", err);
     res.status(500).json({ error: "Failed to fetch meals" });
   }
 });
