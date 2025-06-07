@@ -62,7 +62,8 @@ const isAdmin = (req, res, next) => {
 // Register
 app.post("/register", async (req, res) => {
   try {
-    const { email, password, name, isAdmin, phone } = req.body;
+    const { email, password, name, phone, adminKey, cafeteriaId } = req.body;
+
     if (!email || !password || !name) {
       return res
         .status(400)
@@ -70,30 +71,53 @@ app.post("/register", async (req, res) => {
     }
 
     const existingUser = await User.findOne({ email });
-    if (existingUser)
+    if (existingUser) {
       return res.status(400).json({ error: "User already exists" });
+    }
+
+    // Verify admin key to determine if user is admin
+    const ADMIN_SECRET = process.env.ADMINPASS || "ADMINPASS"; // or load from env securely
+    const isAdmin = adminKey === ADMIN_SECRET;
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = new User({
+    // Create user object, include cafeteriaId if admin
+    const userData = {
       email,
       password: hashedPassword,
       name,
-      isAdmin: isAdmin || false,
       phone,
-    });
+      isAdmin,
+    };
+
+    if (isAdmin) {
+      if (!cafeteriaId) {
+        return res
+          .status(400)
+          .json({ error: "Cafeteria must be selected for admin" });
+      }
+      userData.cafeteria_id = cafeteriaId; // or however you store it in your schema
+    }
+
+    const user = new User(userData);
     await user.save();
 
     const token = jwt.sign(
       { userId: user._id, isAdmin: user.isAdmin },
       JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
+      { expiresIn: "7d" }
     );
 
-    console.log("user", user);
-    res.json({ token, user: { email, name, isAdmin: user.isAdmin, phone } });
+    res.json({
+      token,
+      user: {
+        email,
+        name,
+        isAdmin: user.isAdmin,
+        phone,
+        cafeteria_id: user.cafeteria_id,
+      },
+    });
   } catch (err) {
     console.error("Registration error:", err);
     res.status(500).json({ error: "Failed to register user" });
@@ -120,16 +144,21 @@ app.post("/login", async (req, res) => {
     const token = jwt.sign(
       { userId: user._id, isAdmin: user.isAdmin },
       JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
+      { expiresIn: "7d" }
     );
 
     res.json({
       token,
-      user: { email: user.email, name: user.name, isAdmin: user.isAdmin },
+      user: {
+        email: user.email,
+        name: user.name,
+        isAdmin: user.isAdmin,
+        phone: user.phone,
+        cafeteria_id: user.cafeteria_id || null,
+      },
     });
   } catch (err) {
+    console.error("Login error:", err);
     res.status(500).json({ error: "Login failed" });
   }
 });
