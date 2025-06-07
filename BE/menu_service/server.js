@@ -290,7 +290,7 @@ app.get("/verify/:reference", async (req, res) => {
         return res.status(400).json({ error: "Order ID missing in metadata" });
       }
 
-      const order = await Order.findById(orderId);
+      const order = await Order.findById(orderId).populate("meal_id").exec();
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
