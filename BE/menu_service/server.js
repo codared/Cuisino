@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
+const axios = require("axios");
 
 // Models (assume these are in ./models folder and correctly exported)
 const Meal = require("./models/Meal");
