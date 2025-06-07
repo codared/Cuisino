@@ -236,6 +236,17 @@ app.delete("/meals/:id", authenticate, isAdmin, async (req, res) => {
 
 // --- Orders ---
 
+function calculateTotal(order) {
+  const mealTotal = order.meal_id.price * order.quantity;
+  const sidesTotal = order.sides.reduce(
+    (sum, side) => sum + side.price * side.qty,
+    0
+  );
+  const deliveryFee = order.delivery ? 1000 : 0; // example fixed delivery fee
+
+  return mealTotal + sidesTotal + deliveryFee;
+}
+
 // Place an order (user only)
 app.post("/orders", authenticate, async (req, res) => {
   console.log("Request body:", req.body);
@@ -253,6 +264,9 @@ app.post("/orders", authenticate, async (req, res) => {
       cafeteria_id,
       status: "Pending",
       paid: false,
+      sides: sides || [],
+      delivery: delivery || false,
+      deliveryLocation: deliveryLocation || "",
     });
     await order.save();
     res.status(201).json(order);
@@ -281,9 +295,6 @@ app.get("/verify/:reference", async (req, res) => {
     const data = response.data;
 
     if (data.status && data.data.status === "success") {
-      // Payment was successful
-      // Find the order by the reference (assuming you saved it in your DB)
-      // Or find by order id stored in metadata if you passed that on initialization
       const orderId = data.data.metadata?.order_id;
 
       if (!orderId) {
@@ -295,12 +306,14 @@ app.get("/verify/:reference", async (req, res) => {
         return res.status(404).json({ error: "Order not found" });
       }
 
-      // Update order payment status
       order.paid = true;
       order.paymentReference = reference;
       await order.save();
 
-      return res.json({ success: true, order });
+      const orderObj = order.toObject();
+      orderObj.total = calculateTotal(orderObj); // Add this function to calculate total price including sides & delivery
+
+      return res.json({ success: true, order: orderObj });
     } else {
       // Payment not successful
       return res.status(400).json({ error: "Payment verification failed" });
