@@ -585,7 +585,7 @@ const cors = require("cors");
 
 // Models (assume these are in ./models folder and correctly exported)
 const Meal = require("./models/Meal");
-const User = require("./models/user");
+const User = require("./models/User");
 const Rating = require("./models/Rating");
 const Order = require("./models/Order");
 const Payment = require("./models/Payment");
