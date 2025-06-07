@@ -66,7 +66,7 @@ app.get("/ping", (req, res) => {
 
 // In your .env file or environment config
 const CAFETERIA_ADMIN_KEYS =
-  '{"Cafeteria 1":"C1ADMINPASS","Cafeteria 2":"Cafeteria2ADMINPASS", "Smoothie Shack":"ShackADMINPASS", "Med Cafeteria":"ABUADTHADMINPASS", Seasons Deli":"DelisADMINPASS"}';
+  '{"Cafeteria 1":"C1ADMINPASS","Cafeteria 2":"Cafeteria2ADMINPASS", "Smoothie Shack":"ShackADMINPASS", "Med Cafeteria":"ABUADTHADMINPASS", "Seasons Deli":"DelisADMINPASS"}';
 
 // Register
 app.post("/register", async (req, res) => {
