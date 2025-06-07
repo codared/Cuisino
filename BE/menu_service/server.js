@@ -251,7 +251,15 @@ function calculateTotal(order) {
 app.post("/orders", authenticate, async (req, res) => {
   console.log("Request body:", req.body);
   try {
-    const { meal_id, quantity, cafeteria_id } = req.body;
+    const {
+      meal_id,
+      quantity,
+      cafeteria_id,
+      sides,
+      delivery,
+      deliveryLocation,
+    } = req.body;
+
     if (!meal_id || !quantity || !cafeteria_id)
       return res
         .status(400)
