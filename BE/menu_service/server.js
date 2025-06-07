@@ -57,6 +57,11 @@ const isAdmin = (req, res, next) => {
   next();
 };
 
+//pinging server to keep it awake
+app.get("/ping", (req, res) => {
+  res.send("pong");
+});
+
 // --- Auth Routes ---
 
 // Register
