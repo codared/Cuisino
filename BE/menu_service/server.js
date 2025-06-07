@@ -86,7 +86,7 @@ app.post("/register", async (req, res) => {
     }
 
     // const ADMIN_SECRET = process.env.ADMINPASS || "ADMINPASS";
-    const cafeteriaAdminKeys = JSON.parse(CAFETERIA_ADMIN_KEYS || "{}");
+    const cafeteriaAdminKeys = JSON.parse(CAFETERIA_ADMIN_KEYS);
 
     // If user claims to be admin, check admin key validity
     if (isAdmin) {
@@ -166,7 +166,7 @@ app.post("/login", async (req, res) => {
     }
 
     // If user is admin, check adminKey matches
-    const cafeteriaAdminKeys = JSON.parse(CAFETERIA_ADMIN_KEYS || "{}");
+    const cafeteriaAdminKeys = JSON.parse(CAFETERIA_ADMIN_KEYS);
 
     if (user.isAdmin) {
       const expectedKey = cafeteriaAdminKeys[user.cafeteria_id];
