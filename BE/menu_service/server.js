@@ -337,8 +337,6 @@ app.post("/orders", authenticate, async (req, res) => {
 
 //verify payment
 app.get("/verify/:reference", async (req, res) => {
-  console.log("Verify route hit with reference:", req.params.reference);
-
   const { reference } = req.params;
 
   try {
