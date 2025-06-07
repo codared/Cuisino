@@ -408,9 +408,10 @@ app.get("/admin/orders", authenticate, isAdmin, async (req, res) => {
         .status(400)
         .json({ error: "cafeteria_id query param required" });
 
-    const orders = await Order.find({ cafeteria_id: cafeteriaId }).populate(
-      "meal_id"
-    );
+    const orders = await Order.find({ cafeteria_id: cafeteriaId })
+      .populate("meal_id")
+      .populate("user_id", "name phone");
+
     res.json(orders);
   } catch (err) {
     res.status(500).json({ error: "Failed to get orders" });

@@ -13,6 +13,7 @@ const UserSchema = new mongoose.Schema({
     required: function () {
       return this.isAdmin;
     },
+    location: String,
   }, // only required if isAdmin is true
 });
 
