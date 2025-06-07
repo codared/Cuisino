@@ -64,6 +64,10 @@ app.get("/ping", (req, res) => {
 
 // --- Auth Routes ---
 
+// In your .env file or environment config
+const CAFETERIA_ADMIN_KEYS =
+  '{"Cafeteria 1":"C1ADMINPASS","Cafeteria 2":"Cafeteria2ADMINPASS", "Smoothie Shack":"ShackADMINPASS", "Med Cafeteria":"ABUADTHADMINPASS", Seasons Deli":"DelisADMINPASS"}';
+
 // Register
 app.post("/register", async (req, res) => {
   try {
@@ -81,17 +85,21 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ error: "User already exists" });
     }
 
-    const ADMIN_SECRET = process.env.ADMINPASS || "ADMINPASS";
+    // const ADMIN_SECRET = process.env.ADMINPASS || "ADMINPASS";
+    const cafeteriaAdminKeys = JSON.parse(CAFETERIA_ADMIN_KEYS || "{}");
 
     // If user claims to be admin, check admin key validity
     if (isAdmin) {
-      if (adminKey !== ADMIN_SECRET) {
-        return res.status(400).json({ error: "Invalid admin key" });
-      }
       if (!cafeteriaId) {
         return res
           .status(400)
           .json({ error: "Cafeteria must be selected for admin" });
+      }
+      const expectedKey = cafeteriaAdminKeys[cafeteriaId];
+      if (!expectedKey || adminKey !== expectedKey) {
+        return res
+          .status(400)
+          .json({ error: "Invalid admin key for selected cafeteria" });
       }
     }
 
@@ -147,7 +155,7 @@ app.post("/login", async (req, res) => {
         .json({ error: "Please provide email and password" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: new RegExp(`^${email}$`, "i") });
     if (!user) {
       return res.status(400).json({ error: "Invalid email or password" });
     }
@@ -158,10 +166,14 @@ app.post("/login", async (req, res) => {
     }
 
     // If user is admin, check adminKey matches
-    const ADMIN_SECRET = process.env.ADMINPASS || "ADMINPASS";
+    const cafeteriaAdminKeys = JSON.parse(CAFETERIA_ADMIN_KEYS || "{}");
+
     if (user.isAdmin) {
-      if (!adminKey || adminKey !== ADMIN_SECRET) {
-        return res.status(400).json({ error: "Invalid admin key" });
+      const expectedKey = cafeteriaAdminKeys[user.cafeteria_id];
+      if (!adminKey || adminKey !== expectedKey) {
+        return res
+          .status(400)
+          .json({ error: "Invalid admin key for your cafeteria" });
       }
     }
 
