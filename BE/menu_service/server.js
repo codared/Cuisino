@@ -260,6 +260,59 @@ app.post("/orders", authenticate, async (req, res) => {
   }
 });
 
+//verify payment
+app.get("/verify/:reference", async (req, res) => {
+  console.log("Verify route hit with reference:", req.params.reference);
+
+  const { reference } = req.params;
+
+  try {
+    // Call Paystack verify transaction API
+    const response = await axios.get(
+      `https://api.paystack.co/transaction/verify/${reference}`,
+      {
+        headers: {
+          Authorization: `Bearer sk_test_cc58eabc688ab8ebc98cbc1567b9843fd141b53b`, // Your secret key
+        },
+      }
+    );
+
+    const data = response.data;
+
+    if (data.status && data.data.status === "success") {
+      // Payment was successful
+      // Find the order by the reference (assuming you saved it in your DB)
+      // Or find by order id stored in metadata if you passed that on initialization
+      const orderId = data.data.metadata?.order_id;
+
+      if (!orderId) {
+        return res.status(400).json({ error: "Order ID missing in metadata" });
+      }
+
+      const order = await Order.findById(orderId);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      // Update order payment status
+      order.paid = true;
+      order.paymentReference = reference;
+      await order.save();
+
+      return res.json({ success: true, order });
+    } else {
+      // Payment not successful
+      return res.status(400).json({ error: "Payment verification failed" });
+    }
+  } catch (err) {
+    console.error(
+      "Paystack verification error:",
+      err.response?.data || err.message
+    );
+    return res.status(500).json({ error: "Server error verifying payment" });
+  }
+});
+
 // Get all orders of authenticated user
 app.get("/orders", authenticate, async (req, res) => {
   try {
