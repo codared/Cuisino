@@ -62,7 +62,8 @@ const isAdmin = (req, res, next) => {
 // Register
 app.post("/register", async (req, res) => {
   try {
-    const { email, password, name, phone, adminKey, cafeteriaId } = req.body;
+    const { email, password, name, phone, adminKey, cafeteriaId, isAdmin } =
+      req.body;
 
     if (!email || !password || !name) {
       return res
@@ -75,28 +76,33 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ error: "User already exists" });
     }
 
-    // Verify admin key to determine if user is admin
-    const ADMIN_SECRET = process.env.ADMINPASS || "ADMINPASS"; // or load from env securely
-    const isAdmin = adminKey === ADMIN_SECRET;
+    const ADMIN_SECRET = process.env.ADMINPASS || "ADMINPASS";
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user object, include cafeteriaId if admin
-    const userData = {
-      email,
-      password: hashedPassword,
-      name,
-      phone,
-      isAdmin,
-    };
-
+    // If user claims to be admin, check admin key validity
     if (isAdmin) {
+      if (adminKey !== ADMIN_SECRET) {
+        return res.status(400).json({ error: "Invalid admin key" });
+      }
       if (!cafeteriaId) {
         return res
           .status(400)
           .json({ error: "Cafeteria must be selected for admin" });
       }
-      userData.cafeteria_id = cafeteriaId; // or however you store it in your schema
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Prepare user data
+    const userData = {
+      email,
+      password: hashedPassword,
+      name,
+      phone,
+      isAdmin: !!isAdmin, // convert to boolean in case
+    };
+
+    if (isAdmin) {
+      userData.cafeteria_id = cafeteriaId;
     }
 
     const user = new User(userData);
@@ -115,7 +121,7 @@ app.post("/register", async (req, res) => {
         name,
         isAdmin: user.isAdmin,
         phone,
-        cafeteria_id: user.cafeteria_id,
+        cafeteria_id: user.cafeteria_id || null,
       },
     });
   } catch (err) {
@@ -127,19 +133,31 @@ app.post("/register", async (req, res) => {
 // Login
 app.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password)
+    const { email, password, adminKey } = req.body;
+
+    if (!email || !password) {
       return res
         .status(400)
         .json({ error: "Please provide email and password" });
+    }
 
     const user = await User.findOne({ email });
-    if (!user)
+    if (!user) {
       return res.status(400).json({ error: "Invalid email or password" });
+    }
 
     const validPass = await bcrypt.compare(password, user.password);
-    if (!validPass)
+    if (!validPass) {
       return res.status(400).json({ error: "Invalid email or password" });
+    }
+
+    // If user is admin, check adminKey matches
+    const ADMIN_SECRET = process.env.ADMINPASS || "ADMINPASS";
+    if (user.isAdmin) {
+      if (!adminKey || adminKey !== ADMIN_SECRET) {
+        return res.status(400).json({ error: "Invalid admin key" });
+      }
+    }
 
     const token = jwt.sign(
       { userId: user._id, isAdmin: user.isAdmin },
