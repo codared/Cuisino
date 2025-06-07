@@ -301,7 +301,6 @@ function calculateTotal(order) {
 
 // Place an order (user only)
 app.post("/orders", authenticate, async (req, res) => {
-  console.log("Request body:", req.body);
   try {
     const {
       meal_id,
