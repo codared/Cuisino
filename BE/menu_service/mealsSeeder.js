@@ -5,7 +5,7 @@ const Meal = require("./models/Meal"); // Adjust path as needed
 mongoose
   .connect(
     // "mongodb+srv://ohuejames101:abuadatlas@abuad.uskzl8q.mongodb.net/abuad?retryWrites=true&w=majority"
-    "mongodb+srv://cuisino:Cuisino@abuad.uskzl8q.mongodb.net/?retryWrites=true&w=majority&appName=abuad"
+    "mongodb+srv://cuisino:Cuisino@abuad.uskzl8q.mongodb.net/abuad?retryWrites=true&w=majority&appName=abuad"
   )
   .then(() => Meal.insertMany(meals))
   .then(() => {

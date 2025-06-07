@@ -602,9 +602,9 @@ const JWT_SECRET =
 
 // Connect to MongoDB (make sure your URI is correct)
 mongoose.connect(
-  process.env.MONGO_URI ||
-    // "mongodb+srv://<db_username>:<db_password>@abuad.uskzl8q.mongodb.net/?retryWrites=true&w=majority&appName=abuad",
-    "mongodb+srv://cuisino:Cuisino@abuad.uskzl8q.mongodb.net/?retryWrites=true&w=majority&appName=abuad",
+  // process.env.MONGO_URI ||
+  // "mongodb+srv://<db_username>:<db_password>@abuad.uskzl8q.mongodb.net/?retryWrites=true&w=majority&appName=abuad",
+  "mongodb+srv://cuisino:Cuisino@abuad.uskzl8q.mongodb.net/abuad?retryWrites=true&w=majority&appName=abuad",
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -667,8 +667,10 @@ app.post("/register", async (req, res) => {
       }
     );
 
+    console.log("user", user);
     res.json({ token, user: { email, name, isAdmin: user.isAdmin } });
   } catch (err) {
+    console.error("Registration error:", err);
     res.status(500).json({ error: "Failed to register user" });
   }
 });
@@ -726,6 +728,7 @@ app.get("/meals", async (req, res) => {
     const meals = await Meal.find({});
     res.json(meals);
   } catch (err) {
+    console.error("Error fetching meals:", error);
     res.status(500).json({ error: "Failed to fetch meals" });
   }
 });
