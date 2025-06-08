@@ -557,6 +557,17 @@ app.post("/meals", authenticate, isAdmin, async (req, res) => {
   }
 });
 
+//categories
+app.get("/categories", async (req, res) => {
+  try {
+    const categories = await Meal.distinct("category");
+    res.json(categories);
+  } catch (err) {
+    console.error("Error fetching categories:", err);
+    res.status(500).json({ error: "Failed to fetch categories" });
+  }
+});
+
 // --- Ratings ---
 
 // Add a rating for a meal (user only)
