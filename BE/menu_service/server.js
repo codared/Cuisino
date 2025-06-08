@@ -420,7 +420,7 @@ app.get("/verify/:reference", async (req, res) => {
 });
 
 // Get all orders of the logged-in user
-app.get("/api/orders/user", authenticate, async (req, res) => {
+app.get("/orders/user", authenticate, async (req, res) => {
   try {
     const userId = req.user.userId; // Extracted from JWT in `authenticate` middleware
 
