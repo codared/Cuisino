@@ -479,11 +479,36 @@ app.get("/admin/orders", authenticate, isAdmin, async (req, res) => {
         .json({ error: "cafeteria_id query param required" });
 
     const orders = await Order.find({ cafeteria_id })
-      .populate("user_id", "name phone") // user's name & phone
-      .populate("meal_id"); // full meal object
+      .populate("user_id", "name phone")
+      .populate("meal_id");
 
-    res.json(orders);
+    const formatter = new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 0,
+    });
+
+    const enhancedOrders = orders.map((order) => {
+      const mealPrice = order.meal_id?.price || 0;
+      const sidesTotal = (order.sides || []).reduce(
+        (sum, s) => sum + s.price * s.qty,
+        0
+      );
+      const packingFee = order.packing ? 100 : 0;
+      const deliveryFee = order.delivery ? 200 : 0;
+
+      const total = mealPrice + sidesTotal + packingFee + deliveryFee;
+
+      return {
+        ...order._doc,
+        total,
+        formattedTotal: formatter.format(total), // e.g., ₦1,400
+      };
+    });
+
+    res.json(enhancedOrders);
   } catch (err) {
+    console.error("Error fetching orders:", err);
     res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
