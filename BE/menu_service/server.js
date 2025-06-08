@@ -96,10 +96,8 @@ app.post("/register", async (req, res) => {
     const cafeteriaAdminKeys = JSON.parse(CAFETERIA_ADMIN_KEYS);
 
     // If user claims to be admin, check admin key validity
-    if (user.isAdmin) {
-      const cafeteriaName = cafeteriaIdToName[user.cafeteria_id];
-      const expectedKey = cafeteriaAdminKeys[cafeteriaName];
-
+    if (isAdmin) {
+      const expectedKey = cafeteriaAdminKeys[cafeteriaId?.toString()];
       if (!adminKey || adminKey !== expectedKey) {
         return res
           .status(400)
@@ -172,15 +170,11 @@ app.post("/login", async (req, res) => {
     // If user is admin, check adminKey matches
     const cafeteriaAdminKeys = JSON.parse(CAFETERIA_ADMIN_KEYS);
 
-    if (user.isAdmin) {
-      const cafeteriaName = cafeteriaIdToName[user.cafeteria_id];
-      const expectedKey = cafeteriaAdminKeys[cafeteriaName];
-
-      if (!adminKey || adminKey !== expectedKey) {
-        return res
-          .status(400)
-          .json({ error: "Invalid admin key for your cafeteria" });
-      }
+    const expectedKey = cafeteriaAdminKeys[user.cafeteria_id?.toString()];
+    if (!adminKey || adminKey !== expectedKey) {
+      return res
+        .status(400)
+        .json({ error: "Invalid admin key for your cafeteria" });
     }
 
     const token = jwt.sign(
