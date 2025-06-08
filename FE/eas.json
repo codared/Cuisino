@@ -12,7 +12,17 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "ios": {
+        "buildType": "release",
+        "distribution": "app-store"
+      },
+      "submit": {
+        "ios": {
+          "appleId": "you@example.com",
+          "ascAppId": "123456789"
+        }
+      }
     }
   },
   "submit": {
