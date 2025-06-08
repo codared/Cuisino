@@ -415,14 +415,17 @@ app.get("/verify/:reference", async (req, res) => {
 });
 
 // Get all orders of authenticated user
-app.get("/orders", authenticate, async (req, res) => {
+app.get("/admin/orders", authenticate, isAdmin, async (req, res) => {
   try {
-    const orders = await Order.find({ user_id: req.user.userId }).populate(
-      "meal_id"
-    );
+    const { cafeteria_id } = req.query;
+
+    const orders = await Order.find({ cafeteria_id })
+      .populate("user_id", "name phone") // 👈 Populates name & phone from User
+      .populate("meal_id"); // 👈 Populates full meal object
+
     res.json(orders);
   } catch (err) {
-    res.status(500).json({ error: "Failed to get orders" });
+    res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
 

@@ -19,7 +19,7 @@ const mongoose = require("mongoose");
 // });
 
 const OrderSchema = new mongoose.Schema({
-  user_id: String,
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   meal_id: { type: mongoose.Schema.Types.ObjectId, ref: "Meal" },
   quantity: Number,
   cafeteria_id: Number,
