@@ -511,6 +511,27 @@ app.put("/orders/:id/status", authenticate, isAdmin, async (req, res) => {
   }
 });
 
+// POST /meals - Admin adds a meal
+app.post("/meals", authenticate, isAdmin, async (req, res) => {
+  try {
+    const { name, price, available, image, cafeteria_id } = req.body;
+
+    const meal = new Meal({
+      name,
+      price,
+      available,
+      image,
+      cafeteria_id,
+    });
+
+    await meal.save();
+    res.status(201).json(meal);
+  } catch (err) {
+    console.error("Add meal error:", err);
+    res.status(500).json({ error: "Failed to add meal" });
+  }
+});
+
 // --- Ratings ---
 
 // Add a rating for a meal (user only)
