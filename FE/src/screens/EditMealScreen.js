@@ -7,28 +7,32 @@ import {
   StyleSheet,
   Image,
   Alert,
-  Platform,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
-
-import { ActivityIndicator } from "react-native";
-import { useUser } from "../context/UserContext";
 import { Ionicons } from "@expo/vector-icons";
+import { useUser } from "../context/UserContext";
+
+const API_BASE = "https://cuisino.onrender.com";
 
 const EditMealScreen = ({ route, navigation }) => {
   const { meal } = route.params || {};
   const { user } = useUser();
+
   const [name, setName] = useState(meal?.name || "");
   const [price, setPrice] = useState(meal?.price?.toString() || "");
-  const [image, setImage] = useState(meal?.image || "");
-  const [imageUrl, setImageUrl] = useState("");
+  const [image, setImage] = useState(meal?.image || null);
+  const [newImage, setNewImage] = useState(null); // if updated
   const [uploading, setUploading] = useState(false);
   const [availabilityStatus, setAvailabilityStatus] = useState(
     meal?.availabilityStatus || "Available"
   );
+  const [customTime, setCustomTime] = useState("");
+  const [loading, setLoading] = useState(false); // used for delete
+
   const predefinedOptions = [
     "Available",
     "Temporarily Unavailable",
@@ -37,263 +41,210 @@ const EditMealScreen = ({ route, navigation }) => {
     "Last Batch",
   ];
 
-  const [customTime, setCustomTime] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  // 🧿 Request permission on mount
-  const requestPermission = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission Denied", "Please grant access to your media.");
-    }
-  };
-
-  React.useEffect(() => {
-    requestPermission();
-  }, []);
-
   const pickImage = async () => {
-    setLoading(true);
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        options: { mediaTypes: ["images"] },
-        base64: true,
-        quality: 0.7,
-      });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+    });
 
-      if (!result.canceled) {
-        const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
-        const data = {
-          file: base64Img,
-          upload_preset: "ml_default",
-        };
-
-        setUploading(true);
-
-        const res = await fetch(
-          "https://api.cloudinary.com/v1_1/dan8108wf/image/upload",
-          {
-            method: "POST",
-            body: JSON.stringify(data),
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-
-        const cloud = await res.json();
-        console.log("cloud", cloud);
-
-        if (cloud.secure_url) {
-          setImage(cloud.secure_url);
-          setImageUrl(cloud.secure_url);
-          Alert.alert(
-            "✅ Uploaded",
-            "Image uploaded successfully. \n Your image will be updated shortly."
-          );
-          // navigation.navigate("Edit Meals", { updated: true });
-          // navigation.goBack();
-        } else {
-          Alert.alert(
-            "❌ Upload Failed",
-            cloud.error?.message || "Unknown error"
-          );
-        }
-      }
-    } catch (err) {
-      console.error("Picker error:", err);
-      Alert.alert("❌ Error", "Image selection failed.");
-    } finally {
-      setUploading(false);
-      setLoading(false);
+    if (!result.canceled) {
+      setNewImage(result.assets[0].uri);
     }
   };
 
-  //  const res = await fetch(`http://localhost:3000/meals/${meal.id}`,
-
-  const updateMeal = async () => {
-    setLoading(true);
-    const payload = {
-      name,
-      price: parseFloat(price),
-      image,
-      availabilityStatus:
-        availabilityStatus === "Available in 5 mins" && customTime
-          ? `Available in ${customTime}`
-          : availabilityStatus,
-    };
-
-    console.log("Updating meal ID:", meal._id);
-    console.log("Payload:", payload);
-    console.log("Token:", user.token);
+  const uploadImageToCloudinary = async (uri) => {
+    const formData = new FormData();
+    formData.append("file", {
+      uri,
+      type: "image/jpeg",
+      name: "meal.jpg",
+    });
+    formData.append("upload_preset", "ml_default");
 
     try {
       const res = await fetch(
-        `https://cuisino.onrender.com/meals/${meal._id}`,
+        "https://api.cloudinary.com/v1_1/dan8108wf/image/upload",
         {
-          method: "PUT",
+          method: "POST",
+          body: formData,
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${user.token}`,
+            "Content-Type": "multipart/form-data",
           },
-          body: JSON.stringify(payload),
         }
       );
 
       const data = await res.json();
-      if (res.ok) {
-        Alert.alert("✅ Meal Updated", "Changes saved.");
-        navigation.goBack();
-      } else {
-        console.error("Update failed:", data);
-        Alert.alert("❌ Failed", data.error || "Unknown error");
-      }
+      if (data.secure_url) return data.secure_url;
+      else throw new Error("Image upload failed");
     } catch (err) {
-      console.error("Update exception:", err);
-      Alert.alert("Error", "Failed to update meal");
-    } finally {
-      setLoading(false);
+      console.error("Cloudinary upload error:", err);
+      return null;
     }
   };
 
-  const deleteMeal = async (mealId) => {
-    setLoading(true);
+  const updateMeal = async () => {
+    if (!name || !price) {
+      return Alert.alert("Missing info", "Name and price are required");
+    }
+
+    setUploading(true);
+
     try {
-      const res = await fetch(`https://cuisino.onrender.com/meals/${mealId}`, {
-        method: "DELETE",
+      let finalImageUrl = image;
+
+      if (newImage) {
+        const uploadedUrl = await uploadImageToCloudinary(newImage);
+        if (!uploadedUrl) throw new Error("Image upload failed");
+        finalImageUrl = uploadedUrl;
+      }
+
+      const payload = {
+        name,
+        price: parseFloat(price),
+        image: finalImageUrl,
+        availabilityStatus:
+          availabilityStatus === "Available in 5 mins" && customTime
+            ? `Available in ${customTime}`
+            : availabilityStatus,
+      };
+
+      const res = await fetch(`${API_BASE}/meals/${meal._id}`, {
+        method: "PUT",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${user.token}`,
         },
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        Alert.alert("✅ Meal deleted");
+        Alert.alert("✅ Meal Updated", "Changes saved");
         navigation.goBack();
       } else {
-        Alert.alert("Error", data?.error || "Could not delete meal");
+        Alert.alert("Error", data.error || "Update failed");
       }
     } catch (err) {
-      console.log("error deleting meal:", err);
-      Alert.alert("Error", "An error occurred");
+      console.error("Update error:", err);
+      Alert.alert("Error", err.message || "An error occurred");
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
   };
 
-  if (!meal) {
-    return (
-      <View style={styles.container}>
-        <Text>No meal found</Text>
-      </View>
-    );
-  }
+  const deleteMeal = async (mealId) => {
+    Alert.alert(
+      "⚠️ Confirm Deletion",
+      "Are you sure you want to delete this meal?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const res = await fetch(`${API_BASE}/meals/${mealId}`, {
+                method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${user.token}`,
+                },
+              });
 
-  if (loading) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#E7B008" />
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
+              const data = await res.json();
+
+              if (res.ok) {
+                Alert.alert("✅ Meal deleted");
+                navigation.goBack();
+              } else {
+                Alert.alert("Error", data?.error || "Could not delete meal");
+              }
+            } catch (err) {
+              console.log("error deleting meal:", err);
+              Alert.alert("Error", "An error occurred");
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
     );
-  }
+  };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={{ zIndex: 10 }}
-      >
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <TouchableOpacity onPress={() => navigation.goBack()}>
         <Ionicons name="arrow-back" size={28} color="#007AFF" />
       </TouchableOpacity>
-      {image ? (
-        <Image
-          source={{
-            uri: image,
-          }}
-          style={{
-            width: "50%",
-            height: 200,
-            marginTop: 15,
-            alignSelf: "center",
-          }}
-        />
+
+      {newImage || image ? (
+        <Image source={{ uri: newImage || image }} style={styles.preview} />
       ) : (
         <Image
           source={require("../assets/images/take-away.png")}
-          style={{
-            width: "50%",
-            height: 200,
-            marginTop: 15,
-            alignSelf: "center",
-          }}
-        />
-      )}
-      {uploading && (
-        <ActivityIndicator
-          size="large"
-          color="#000000"
-          style={{ marginVertical: 20 }}
+          style={styles.preview}
         />
       )}
 
-      <Text style={[styles.label, { paddingTop: 35 }]}>Name</Text>
-      <TextInput
-        value={name}
-        onChangeText={setName}
-        style={styles.input}
-        placeholder="Meal name"
-      />
+      <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
+        <Text style={{ fontSize: 18 }}>Select Image</Text>
+      </TouchableOpacity>
 
-      <Text style={styles.label}>Price</Text>
+      <Text style={styles.label}>Meal Name</Text>
+      <TextInput value={name} onChangeText={setName} style={styles.input} />
+
+      <Text style={styles.label}>Price (₦)</Text>
       <TextInput
         value={price}
         onChangeText={setPrice}
-        style={styles.input}
         keyboardType="numeric"
+        style={styles.input}
         returnKeyType="done"
-        placeholder="Meal price"
       />
 
-      <Button title="Upload Image" onPress={pickImage} />
-
-      <Text style={styles.label}>Availability</Text>
-      <View style={styles.pickerWrapper}>
-        <Picker
-          selectedValue={availabilityStatus}
-          onValueChange={(itemValue) => setAvailabilityStatus(itemValue)}
-        >
-          <Picker.Item label="Available" value="Available" />
-          <Picker.Item
-            label="Available in 5 mins"
-            value="Available in 5 mins"
-          />
-          <Picker.Item
-            label="Temporarily Unavailable"
-            value="Temporarily Unavailable"
-          />
-          <Picker.Item label="Last Batch" value="Last Batch" />
-          <Picker.Item
-            label="Finished for the Day"
-            value="Finished for the Day"
-          />
-        </Picker>
-      </View>
+      <Text style={styles.label}>Availability Status</Text>
+      <Picker
+        selectedValue={availabilityStatus}
+        onValueChange={setAvailabilityStatus}
+      >
+        {predefinedOptions.map((opt) => (
+          <Picker.Item key={opt} label={opt} value={opt} />
+        ))}
+      </Picker>
 
       {availabilityStatus === "Available in 5 mins" && (
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. 10 mins"
-          value={customTime}
-          onChangeText={setCustomTime}
-        />
+        <>
+          <Text style={styles.label}>Custom Time (e.g. 10 mins)</Text>
+          <TextInput
+            placeholder="Enter custom time"
+            value={customTime}
+            onChangeText={setCustomTime}
+            style={styles.input}
+          />
+        </>
       )}
 
-      <View style={{ marginTop: 0 }}>
-        <Button title="Save Changes" onPress={updateMeal} />
-      </View>
+      {uploading ? (
+        <ActivityIndicator
+          size="large"
+          color="#007AFF"
+          style={{ marginTop: 20 }}
+        />
+      ) : (
+        <View style={{ marginTop: 5 }}>
+          <Button title="Update Meal" onPress={updateMeal} />
+        </View>
+      )}
 
-      <View style={{ alignItems: "center", marginTop: 30 }}>
-        <TouchableOpacity onPress={() => deleteMeal(meal._id)}>
+      <View style={{ alignItems: "center", marginTop: 9 }}>
+        <TouchableOpacity
+          onPress={() => deleteMeal(meal._id)}
+          disabled={loading}
+        >
           <Text
             style={{
               backgroundColor: "red",
@@ -304,9 +255,10 @@ const EditMealScreen = ({ route, navigation }) => {
               fontWeight: "bold",
               fontSize: 20,
               padding: 15,
+              opacity: loading ? 0.6 : 1,
             }}
           >
-            Delete Meal
+            {loading ? "Deleting..." : "Delete Meal"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -315,43 +267,28 @@ const EditMealScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 15,
-    paddingTop: 10,
-    backgroundColor: "#fff",
-  },
-  label: { fontWeight: "bold", marginBottom: 5 },
+  container: { padding: 16, backgroundColor: "#fff", flex: 1 },
+  label: { marginTop: 12, fontSize: 16, fontWeight: "bold" },
   input: {
-    borderBottomWidth: 1,
-    borderColor: "#ccc",
-    marginBottom: 15,
-    padding: 8,
-  },
-  image: {
-    marginTop: 50,
-    width: "100%",
-    height: 180,
-    borderRadius: 8,
-    backgroundColor: "#f0f0f0",
-  },
-  pickerWrapper: {
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 5,
-    marginBottom: 15,
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 6,
   },
-  loading: {
-    flex: 1,
-    justifyContent: "center",
+  imagePicker: {
+    marginVertical: 10,
+    backgroundColor: "#eee",
+    padding: 10,
     alignItems: "center",
-    backgroundColor: "#fff",
+    borderRadius: 8,
   },
-  loadingText: {
-    marginTop: 15,
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#555",
+  preview: {
+    width: "80%",
+    height: 250,
+    borderRadius: 8,
+    alignSelf: "center",
+    marginBottom: 10,
   },
 });
 

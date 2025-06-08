@@ -47,6 +47,20 @@ const AddMealScreen = ({ navigation }) => {
     }
   };
 
+  //   const pickImage = async () => {
+  //   const result = await ImagePicker.launchImageLibraryAsync({
+  //     mediaTypes: ['image'], // Updated to fix deprecation warning
+  //     allowsEditing: true,
+  //     aspect: [4, 3],
+  //     quality: 1,
+  //   });
+
+  //   if (!result.canceled) {
+  //     const imageUri = result.assets[0].uri;
+  //     // Use the selected image URI
+  //   }
+  // };
+
   const uploadImageToCloudinary = async (uri) => {
     const formData = new FormData();
     formData.append("file", {
