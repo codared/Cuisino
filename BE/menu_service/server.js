@@ -419,22 +419,18 @@ app.get("/verify/:reference", async (req, res) => {
   }
 });
 
-// Get all orders of authenticated user
-app.get("/api/orders/user/:userId", authenticate, async (req, res) => {
+// Get all orders of the logged-in user
+app.get("/api/orders/user", authenticate, async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.user.userId; // Extracted from JWT in `authenticate` middleware
 
-    // Ensure that the user requesting the orders is the same as the one in the token,
-    // unless they are an admin.
-    if (req.user.id !== userId && !req.user.isAdmin) {
-      return res.status(403).json({ message: "Forbidden" });
-    }
-
-    const orders = await Order.find({ userId }).sort({ createdAt: -1 });
+    const orders = await Order.find({ user_id: userId })
+      .populate("meal_id") // Optional: shows full meal info
+      .sort({ createdAt: -1 }); // Most recent orders first
 
     res.status(200).json(orders);
-  } catch (error) {
-    console.error("Error fetching user orders:", error);
+  } catch (err) {
+    console.error("Error fetching user's orders:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
