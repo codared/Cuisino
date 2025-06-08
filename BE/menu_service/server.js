@@ -65,8 +65,13 @@ app.get("/ping", (req, res) => {
 // --- Auth Routes ---
 
 // In your .env file or environment config
-const CAFETERIA_ADMIN_KEYS =
-  '{"1":"C1ADMINPASS","3":"Cafeteria2ADMINPASS", "2":"ShackADMINPASS", "4":"ABUADTHADMINPASS", "5":"DelisADMINPASS"}';
+const CAFETERIA_ADMIN_KEYS = {
+  1: "C1ADMINPASS",
+  2: "ShackADMINPASS",
+  3: "Cafeteria2ADMINPASS",
+  4: "ABUADTHADMINPASS",
+  5: "DelisADMINPASS",
+};
 
 const cafeteriaIdToName = {
   1: "Cafeteria 1",
@@ -76,7 +81,7 @@ const cafeteriaIdToName = {
   5: "Seasons Deli",
 };
 
-// Register
+// REGISTER
 app.post("/register", async (req, res) => {
   try {
     const { email, password, name, phone, adminKey, cafeteriaId, isAdmin } =
@@ -93,40 +98,40 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ error: "User already exists" });
     }
 
-    const cafeteriaAdminKeys = JSON.parse(CAFETERIA_ADMIN_KEYS);
-
-    // If user claims to be admin, check admin key validity
     if (isAdmin) {
-      const expectedKey = cafeteriaAdminKeys[cafeteriaId?.toString()];
-      if (!adminKey || adminKey !== expectedKey) {
+      if (!cafeteriaId || !adminKey) {
         return res
           .status(400)
-          .json({ error: "Invalid admin key for your cafeteria" });
+          .json({ error: "Missing cafeteria or admin key" });
+      }
+
+      const expectedKey = CAFETERIA_ADMIN_KEYS[cafeteriaId];
+      if (!expectedKey || adminKey !== expectedKey) {
+        return res
+          .status(400)
+          .json({ error: "Invalid admin key for the selected cafeteria" });
       }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Prepare user data
-    const userData = {
+    const user = new User({
       email,
       password: hashedPassword,
       name,
       phone,
-      isAdmin: !!isAdmin, // convert to boolean in case
-    };
+      isAdmin: !!isAdmin,
+      ...(isAdmin && { cafeteria_id: cafeteriaId }),
+    });
 
-    if (isAdmin) {
-      userData.cafeteria_id = cafeteriaId;
-    }
-
-    const user = new User(userData);
     await user.save();
 
     const token = jwt.sign(
       { userId: user._id, isAdmin: user.isAdmin },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      {
+        expiresIn: "7d",
+      }
     );
 
     res.json({
@@ -145,10 +150,9 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// Login
+// LOGIN
 app.post("/login", async (req, res) => {
   try {
-    console.log("Login request body:", req.body);
     const { email, password, adminKey } = req.body;
 
     if (!email || !password) {
@@ -167,20 +171,21 @@ app.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Invalid email or password" });
     }
 
-    // If user is admin, check adminKey matches
-    const cafeteriaAdminKeys = JSON.parse(CAFETERIA_ADMIN_KEYS);
-
-    const expectedKey = cafeteriaAdminKeys[user.cafeteria_id?.toString()];
-    if (!adminKey || adminKey !== expectedKey) {
-      return res
-        .status(400)
-        .json({ error: "Invalid admin key for your cafeteria" });
+    if (user.isAdmin) {
+      const expectedKey = CAFETERIA_ADMIN_KEYS[user.cafeteria_id];
+      if (!adminKey || adminKey !== expectedKey) {
+        return res
+          .status(400)
+          .json({ error: "Invalid admin key for your cafeteria" });
+      }
     }
 
     const token = jwt.sign(
       { userId: user._id, isAdmin: user.isAdmin },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      {
+        expiresIn: "7d",
+      }
     );
 
     res.json({
