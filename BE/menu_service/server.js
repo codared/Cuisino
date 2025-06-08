@@ -93,35 +93,39 @@ app.post("/register", async (req, res) => {
         .json({ error: "Please provide email, password, and name" });
     }
 
-    const existingUser = await User.findOne({ email });
+    const normalizedEmail = email.toLowerCase();
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({ error: "User already exists" });
     }
 
-    if (isAdmin) {
+    const adminFlag = Boolean(isAdmin);
+
+    if (adminFlag) {
       if (!cafeteriaId || !adminKey) {
-        return res
-          .status(400)
-          .json({ error: "Missing cafeteria or admin key" });
+        return res.status(400).json({
+          error: "Admin key and cafeteria are required for admin registration",
+        });
       }
 
       const expectedKey = CAFETERIA_ADMIN_KEYS[cafeteriaId];
       if (!expectedKey || adminKey !== expectedKey) {
         return res
           .status(400)
-          .json({ error: "Invalid admin key for the selected cafeteria" });
+          .json({ error: "Invalid admin key for selected cafeteria" });
       }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new User({
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       name,
-      phone,
-      isAdmin: !!isAdmin,
-      ...(isAdmin && { cafeteria_id: cafeteriaId }),
+      phone: phone || null,
+      isAdmin: adminFlag,
+      cafeteria_id: adminFlag ? cafeteriaId : null,
     });
 
     await user.save();
@@ -129,18 +133,16 @@ app.post("/register", async (req, res) => {
     const token = jwt.sign(
       { userId: user._id, isAdmin: user.isAdmin },
       JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
+      { expiresIn: "7d" }
     );
 
     res.json({
       token,
       user: {
-        email,
-        name,
+        email: user.email,
+        name: user.name,
+        phone: user.phone,
         isAdmin: user.isAdmin,
-        phone,
         cafeteria_id: user.cafeteria_id || null,
       },
     });
@@ -153,7 +155,7 @@ app.post("/register", async (req, res) => {
 // LOGIN
 app.post("/login", async (req, res) => {
   try {
-    const { email, password, adminKey } = req.body;
+    const { email, password, adminKey, cafeteriaId } = req.body;
 
     if (!email || !password) {
       return res
@@ -172,11 +174,21 @@ app.post("/login", async (req, res) => {
     }
 
     if (user.isAdmin) {
-      const expectedKey = CAFETERIA_ADMIN_KEYS[user.cafeteria_id];
-      if (!adminKey || adminKey !== expectedKey) {
+      if (!adminKey || !cafeteriaId) {
         return res
           .status(400)
-          .json({ error: "Invalid admin key for your cafeteria" });
+          .json({ error: "Admin key and cafeteria required" });
+      }
+
+      const expectedKey = CAFETERIA_ADMIN_KEYS[cafeteriaId];
+
+      if (
+        user.cafeteria_id !== cafeteriaId || // ⛔ mismatch cafeteria
+        adminKey !== expectedKey // ⛔ mismatch key
+      ) {
+        return res.status(400).json({
+          error: "Invalid cafeteria or admin key for this account",
+        });
       }
     }
 
