@@ -68,6 +68,14 @@ app.get("/ping", (req, res) => {
 const CAFETERIA_ADMIN_KEYS =
   '{"1":"C1ADMINPASS","3":"Cafeteria2ADMINPASS", "2":"ShackADMINPASS", "4":"ABUADTHADMINPASS", "5":"DelisADMINPASS"}';
 
+const cafeteriaIdToName = {
+  1: "Cafeteria 1",
+  2: "Smoothie Shack",
+  3: "Cafeteria 2",
+  4: "Med Cafeteria",
+  5: "Seasons Deli",
+};
+
 // Register
 app.post("/register", async (req, res) => {
   try {
@@ -85,21 +93,17 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ error: "User already exists" });
     }
 
-    // const ADMIN_SECRET = process.env.ADMINPASS || "ADMINPASS";
     const cafeteriaAdminKeys = JSON.parse(CAFETERIA_ADMIN_KEYS);
 
     // If user claims to be admin, check admin key validity
-    if (isAdmin) {
-      if (!cafeteriaId) {
+    if (user.isAdmin) {
+      const cafeteriaName = cafeteriaIdToName[user.cafeteria_id];
+      const expectedKey = cafeteriaAdminKeys[cafeteriaName];
+
+      if (!adminKey || adminKey !== expectedKey) {
         return res
           .status(400)
-          .json({ error: "Cafeteria must be selected for admin" });
-      }
-      const expectedKey = cafeteriaAdminKeys[cafeteriaId];
-      if (!expectedKey || adminKey !== expectedKey) {
-        return res
-          .status(400)
-          .json({ error: "Invalid admin key for selected cafeteria" });
+          .json({ error: "Invalid admin key for your cafeteria" });
       }
     }
 
@@ -169,7 +173,9 @@ app.post("/login", async (req, res) => {
     const cafeteriaAdminKeys = JSON.parse(CAFETERIA_ADMIN_KEYS);
 
     if (user.isAdmin) {
-      const expectedKey = cafeteriaAdminKeys[user.cafeteria_id];
+      const cafeteriaName = cafeteriaIdToName[user.cafeteria_id];
+      const expectedKey = cafeteriaAdminKeys[cafeteriaName];
+
       if (!adminKey || adminKey !== expectedKey) {
         return res
           .status(400)
