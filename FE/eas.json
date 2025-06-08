@@ -14,18 +14,16 @@
     "production": {
       "autoIncrement": true,
       "ios": {
-        "buildType": "release",
-        "distribution": "app-store"
-      },
-      "submit": {
-        "ios": {
-          "appleId": "ohuejames101@gmail.com",
-          "ascAppId": "6746913655"
-        }
+        "distribution": "store"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "ohuejames101@gmail.com",
+        "ascAppId": "6746913655"
+      }
+    }
   }
 }
