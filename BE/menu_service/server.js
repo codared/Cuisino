@@ -45,6 +45,11 @@ const authenticate = async (req, res, next) => {
     req.user = verified; // { userId, isAdmin }
     next();
   } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      return res
+        .status(401)
+        .json({ error: "Session expired. Please log in again." });
+    }
     console.log("Invalid token error:", err.message);
     res.status(400).json({ error: "Invalid token" });
   }
@@ -415,36 +420,75 @@ app.get("/verify/:reference", async (req, res) => {
 });
 
 // Get all orders of authenticated user
+app.get("/api/orders/user/:userId", authenticate, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Ensure that the user requesting the orders is the same as the one in the token,
+    // unless they are an admin.
+    if (req.user.id !== userId && !req.user.isAdmin) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const orders = await Order.find({ userId }).sort({ createdAt: -1 });
+
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Error fetching user orders:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get all orders of authenticated user
+// app.get("/admin/orders", authenticate, isAdmin, async (req, res) => {
+//   try {
+//     const { cafeteria_id } = req.query;
+
+//     const orders = await Order.find({ cafeteria_id })
+//       .populate("user_id", "name phone") // 👈 Populates name & phone from User
+//       .populate("meal_id"); // 👈 Populates full meal object
+
+//     res.json(orders);
+//   } catch (err) {
+//     res.status(500).json({ error: "Failed to fetch orders" });
+//   }
+// });
+
+// // Admin: get all orders by cafeteria_id with status
+// app.get("/admin/orders", authenticate, isAdmin, async (req, res) => {
+//   try {
+//     const cafeteriaId = parseInt(req.query.cafeteria_id);
+//     if (!cafeteriaId)
+//       return res
+//         .status(400)
+//         .json({ error: "cafeteria_id query param required" });
+
+//     const orders = await Order.find({ cafeteria_id: cafeteriaId })
+//       .populate("meal_id")
+//       .populate("user_id", "name phone");
+
+//     res.json(orders);
+//   } catch (err) {
+//     res.status(500).json({ error: "Failed to get orders" });
+//   }
+// });
+
 app.get("/admin/orders", authenticate, isAdmin, async (req, res) => {
   try {
     const { cafeteria_id } = req.query;
 
-    const orders = await Order.find({ cafeteria_id })
-      .populate("user_id", "name phone") // 👈 Populates name & phone from User
-      .populate("meal_id"); // 👈 Populates full meal object
-
-    res.json(orders);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch orders" });
-  }
-});
-
-// Admin: get all orders by cafeteria_id with status
-app.get("/admin/orders", authenticate, isAdmin, async (req, res) => {
-  try {
-    const cafeteriaId = parseInt(req.query.cafeteria_id);
-    if (!cafeteriaId)
+    if (!cafeteria_id)
       return res
         .status(400)
         .json({ error: "cafeteria_id query param required" });
 
-    const orders = await Order.find({ cafeteria_id: cafeteriaId })
-      .populate("meal_id")
-      .populate("user_id", "name phone");
+    const orders = await Order.find({ cafeteria_id })
+      .populate("user_id", "name phone") // user's name & phone
+      .populate("meal_id"); // full meal object
 
     res.json(orders);
   } catch (err) {
-    res.status(500).json({ error: "Failed to get orders" });
+    res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
 
